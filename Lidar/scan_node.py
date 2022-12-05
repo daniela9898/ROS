@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, '/home/maestro/catkin_ws/src/master_rad/scripts')
 
 from Qlearning import *
-from Lidar import *
+from Lidar.Lidar import *
 from Control import *
 
 ANGLE_MAX = 360 - 1
@@ -17,6 +17,7 @@ HORIZON_WIDTH = 75
 
 MIN_TIME_BETWEEN_SCANS = 0
 MAX_SIMULATION_TIME = float('inf')
+
 
 if __name__ == '__main__':
     try:
