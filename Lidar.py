@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+#No need to run this file, it is imported in scan_node.py
+
 import numpy as np
 from math import *
 from std_msgs.msg import String

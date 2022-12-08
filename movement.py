@@ -4,6 +4,11 @@ import std_msgs.msg
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
+# This file depends on scan_node.py, which publishes a message to the topic 'crash_detection'
+# This topic is Boolean, where True means that an object is near
+# if an object is near, the robot stops
+# For know it only makes the robot move forward   
+
 class movement:
     def stop(data):
         #print(std_msgs.msg._Bool.Bool(True))

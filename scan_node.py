@@ -1,5 +1,11 @@
 #! /usr/bin/env python
 
+# This file takes the data from the lidar, calculates the distance 
+# to an obstacle and if it detects an object nears it 
+# publiches a message to the topic 'crash_detection'
+# This topic is Boolean, where True means that an object is near 
+# scan_node.py uses Lidar.py to calculate the distance to an obstacle
+
 import rospy
 import matplotlib.pyplot as plt
 from datetime import datetime
