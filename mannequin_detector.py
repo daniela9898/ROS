@@ -440,11 +440,11 @@ class MannequinDetector:
         mask_saturation = img2[..., 1] > self.SAT_MINUMUM  # Ditch pixels that are too pastel (grey-ish)
         mask_value = img2[..., 2] > self.VAL_MINIMUM  # Ditch pixels that are too dark
         # Combine masks
-        if qr_code :
-            print("here")
-            mask = mask_hue * mask_saturation * mask_value
-        else:
-            mask = np.zeros([rows, cols])
+        #if qr_code :
+        #    print("here")
+        mask = mask_hue * mask_saturation * mask_value
+        #else:
+        #    mask = np.zeros([rows, cols])
         # Make the mask blurry to help the blob detector
         mask = cv2.blur(mask.astype(np.uint8) * 255, (10, 10))
 
