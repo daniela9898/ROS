@@ -8,8 +8,8 @@ from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 
 MAX_LIDAR_DISTANCE = 1.0
-COLLISION_DISTANCE = 0.14 # LaserScan.range_min = 0.1199999
-NEARBY_DISTANCE = 0.45
+COLLISION_DISTANCE = 0.20 # LaserScan.range_min = 0.1199999
+NEARBY_DISTANCE = 0.25
 
 ZONE_0_LENGTH = 0.4
 ZONE_1_LENGTH = 0.7
@@ -32,6 +32,7 @@ def lidarScan(msgScan):
             # For real robot - protection
             if msgScan.ranges[i] < 0.01:
                 distance = MAX_LIDAR_DISTANCE
+                print(distance)
         else:
             distance = msgScan.ranges[i]
 

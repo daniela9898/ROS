@@ -91,10 +91,10 @@ if __name__ == '__main__':
                 print(x1, '', x2, '', x3, '', x4)
                 if crash:
                     print('CRASH !')
-                    #pub.publish(True)
+                    pub.publish(True)
                 if object_nearby:
                     print('OBJECT NEARBY !')
-                    pub.publish(True)
+                    #pub.publish(True)
                 else:
                     pub.publish(False)
 
