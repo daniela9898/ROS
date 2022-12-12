@@ -1,3 +1,9 @@
+# "In this script, we implement the use of computer vision 
+# for recognizing our mannequins. Specifically, the code is able to 
+# identify the mannequin only if it has a QR code in front of it. 
+# We have modified certain parameters to enable our turtlebot3 to 
+# effectively recognize the mannequins under varying illumination conditions."
+
 import sys
 import time
 import tkinter
