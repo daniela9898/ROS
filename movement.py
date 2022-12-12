@@ -36,16 +36,17 @@ class movement:
         vel_msg.angular.y = 0
         vel_msg.angular.z = 0
         
-       
+        
+
         now = ros.Time.now()
   
-        while ros.Time.now() < now + ros.Duration.from_sec(4):
+        while ros.Time.now() < now + ros.Duration.from_sec(1):
             velocity_publisher.publish(vel_msg)
             print("Moving forward", 0.1, "m/s")
 
 
 ros.init_node('movement', anonymous = False)
-rate = ros.Rate(10)
+#rate = ros.Rate(10)
 movement.move()
 movement.listener()
 
