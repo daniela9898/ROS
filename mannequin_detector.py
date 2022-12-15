@@ -414,9 +414,7 @@ class MannequinDetector:
 
         qr_result = decode(img_bw)
         qr_code = 0
-        if not qr_result:
-            print("not qr code")
-        else:
+        if qr_result:
             qr_data = qr_result[0].data
             qr_data = qr_data.decode("utf-8")
             print(qr_data)
@@ -519,7 +517,7 @@ class MannequinDetector:
         :param fig:
         :return:
         """
-        fig.canvas.draw()
+        fig.canvas.draw()             
         assert fig.canvas.get_width_height()[::-1] + (3,) == img.shape
 
         mask_line = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)

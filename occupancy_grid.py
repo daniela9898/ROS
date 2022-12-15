@@ -7,16 +7,17 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 from typing import Union
 from rospy import Subscriber
-import tf
 from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Odometry
+import tf
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal,MoveBaseResult
 
 class occupancy_grid:
 
     def data2matrix(self, data):
         print("Converting data to matrix")
         info = data.info
-        self.robot_x = info.origin.position.x
-        self.robot_y = info.origin.position.y
         d = data.data
         self.width = info.width
         self.height = info.height
@@ -27,6 +28,7 @@ class occupancy_grid:
         #print("Robot pos: {}, {}".format(self.robot_x,self.robot_y))
         #print("Matrix robot pos: {}, {}".format(self.width/2 - int(self.robot_x),self.height/2 - int(self.robot_y)))
         self.map_matrix[(self.width/2 - int(self.robot_x),self.height/2 - int(self.robot_y))]= 200
+        print("Robot in matrix",self.width/2 - int(self.robot_x), self.height/2 - int(self.robot_y))
         xmin=self.width
         xmax=0
         ymin=self.height
@@ -56,6 +58,11 @@ class occupancy_grid:
                         print("M", end = "")
                     
             print('') 
+        t = self.listener.getLatestCommonTime("odom", "base_footprint")
+        p1 = PoseStamped()
+        p1.header.frame_id = "odom"
+        p_in_base = self.listener.transformPose("base_footprint", p1)
+        #print(p_in_base)
 
     def mannequins2grid(self,data):
         mannequins = list(data.data)
@@ -64,11 +71,14 @@ class occupancy_grid:
             angle = mannequins[i]
             distance = mannequins[i+1]
             # Calculate the manhatten distance split into x and y
-            x = int(distance * math.cos(angle))
-            y = int(distance * math.sin(angle))
+            x = distance * math.cos(angle) 
+            y = distance * math.sin(angle) 
+            #print(x,y)
             try:
-                rmx = int(self.robot_x + x)
-                rmy = int(self.robot_y + y)
+                rmx = self.robot_x + x
+                rmy = self.robot_y + y
+                #print(rmx,rmy)
+                print("Robot pos: {}, {}".format(self.robot_x,self.robot_y))
                 print("Mannequin {}: {},{}".format(m,rmx,rmy))
                 mx,my = self.width/2 - rmx, self.height/2 - rmy
                 self.mannequins.append((mx,my))
@@ -83,6 +93,11 @@ class occupancy_grid:
             #print("Distance of mannequin {}: {},{}".format(m,x,y))
             print("------------------------------------------------------------------------------------")
 
+    def getpos(self, data):
+        self.pose = data.pose.pose.position
+        self.orient = data.pose.pose.orientation
+        self.robot_x = round(self.pose.x, 4)
+        self.robot_y = round(self.pose.y, 4)
 
     def __init__(self):
         self.map_matrix = {}
@@ -91,11 +106,17 @@ class occupancy_grid:
         self.robot_x = 0
         self.robot_y = 0
         self.mannequins = []
-        print("Listening to map topic")
+        self.listener = tf.TransformListener()
+        #print("Listening to map topic")
+        ros.Subscriber("odom", Odometry, self.getpos)
+        #ros.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.getpos)
         ros.Subscriber("map", OccupancyGrid, self.data2matrix)
         #time.sleep(2)
         ros.Subscriber("mannequins", numpy_msg(Floats), self.mannequins2grid)
-        
+        # vgtrans,rot = listener.lookupTransform('map', 'odom', ros.Time(0))
+        #your_pose = PoseStamped()
+        #print("Pose: {},{}".format(your_pose.pose.position.x,your_pose.pose.position.y))
+        #listener.transformPose('odom', your_pose)
         
 
 if __name__ == '__main__':  
