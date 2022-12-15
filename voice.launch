@@ -1,7 +1,0 @@
-<launch>
-  <group ns="turtlebot_custom">
-    <node pkg="mannequin_detection" type="voice_message" name="sound" output="screen"></node>
-    <!-- Additional nodes go above this line -->
-  </group>
-</launch>
-
