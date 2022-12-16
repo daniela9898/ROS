@@ -11,7 +11,8 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 import tf
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal,MoveBaseResult
+import numpy as np
+#from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal,MoveBaseResult
 
 class occupancy_grid:
 
@@ -21,14 +22,13 @@ class occupancy_grid:
         d = data.data
         self.width = info.width
         self.height = info.height
+        self.initial_pose = (self.width/2 - int(self.robot_x), self.height/2 - int(self.robot_y) ,0)
         for i in range(self.width):
             for j in range(self.height):
                 if d[i*self.width + j] != -1:
                     self.map_matrix[(i,j)] = d[i*self.width + j]
-        #print("Robot pos: {}, {}".format(self.robot_x,self.robot_y))
-        #print("Matrix robot pos: {}, {}".format(self.width/2 - int(self.robot_x),self.height/2 - int(self.robot_y)))
-        self.map_matrix[(self.width/2 - int(self.robot_x),self.height/2 - int(self.robot_y))]= 200
-        print("Robot in matrix",self.width/2 - int(self.robot_x), self.height/2 - int(self.robot_y))
+        #self.map_matrix[(self.width/2 - int(self.robot_x),self.height/2 - int(self.robot_y))]= 200
+        #print("Robot in matrix",self.width/2 - int(self.robot_x), self.height/2 - int(self.robot_y))
         xmin=self.width
         xmax=0
         ymin=self.height
@@ -58,11 +58,6 @@ class occupancy_grid:
                         print("M", end = "")
                     
             print('') 
-        t = self.listener.getLatestCommonTime("odom", "base_footprint")
-        p1 = PoseStamped()
-        p1.header.frame_id = "odom"
-        p_in_base = self.listener.transformPose("base_footprint", p1)
-        #print(p_in_base)
 
     def mannequins2grid(self,data):
         mannequins = list(data.data)
@@ -94,10 +89,51 @@ class occupancy_grid:
             print("------------------------------------------------------------------------------------")
 
     def getpos(self, data):
-        self.pose = data.pose.pose.position
-        self.orient = data.pose.pose.orientation
-        self.robot_x = round(self.pose.x, 4)
-        self.robot_y = round(self.pose.y, 4)
+        self.pose = data.pose.pose.position #x,y,z
+        self.orient = data.pose.pose.orientation # x,y,z
+
+        #self.robot_x = round(self.pose.x, 4)
+        #self.robot_y = round(self.pose.y, 4)
+
+        pos = self.getPoseStamped([self.pose.x, self.pose.y, self.pose.z, self.orient.x, self.orient.y, self.orient.z])
+        print(self.pose)
+        print("Orig---")
+        print(self.orient)
+        print(np.arctan2(self.orient.z, self.orient.w)*2)
+        print("Fix---")
+        print(pos.pose)
+        print(np.arctan2(pos.pose.orientation.z, pos.pose.orientation.w)*4)
+        print("---")
+
+    def getPoseStamped(self, c):
+        
+        assert(len(c) == 6)
+        
+        p = PoseStamped()
+        
+        p.header.frame_id = "odom"
+        p.header.stamp = ros.Time.now() - ros.Duration(0.5)
+        
+        p.pose.position.x = c[0]
+        p.pose.position.y = c[1]
+        p.pose.position.z = c[2]
+        
+        quat = tf.transformations.quaternion_from_euler(c[3], c[4], c[5])
+        
+        p.pose.orientation.x = quat[0]
+        p.pose.orientation.y = quat[1]
+        p.pose.orientation.z = quat[2]
+        p.pose.orientation.w = quat[3]
+        
+        try:
+            self.listener.waitForTransform(p.header.frame_id, "map", p.header.stamp, ros.Duration(2))
+            p = self.listener.transformPose("map", p)
+            
+        except:
+            ros.logerr("TF error!")
+            return None
+        
+        return p
 
     def __init__(self):
         self.map_matrix = {}
@@ -109,12 +145,8 @@ class occupancy_grid:
         self.listener = tf.TransformListener()
         #print("Listening to map topic")
         ros.Subscriber("odom", Odometry, self.getpos)
-        #ros.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.getpos)
         ros.Subscriber("map", OccupancyGrid, self.data2matrix)
-        #time.sleep(2)
         ros.Subscriber("mannequins", numpy_msg(Floats), self.mannequins2grid)
-        # vgtrans,rot = listener.lookupTransform('map', 'odom', ros.Time(0))
-        #your_pose = PoseStamped()
         #print("Pose: {},{}".format(your_pose.pose.position.x,your_pose.pose.position.y))
         #listener.transformPose('odom', your_pose)
         
