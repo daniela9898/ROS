@@ -20,32 +20,32 @@ class occupancy_grid:
         print("Converting data to matrix")
         info = data.info
         d = data.data
+
         self.width = info.width
         self.height = info.height
-        self.initial_pose = (self.width/2 - int(self.robot_x), self.height/2 - int(self.robot_y) ,0)
-        for i in range(self.width):
-            for j in range(self.height):
+
+        self.initial_pose = (int(self.width/2 - info.origin.position.x),int(self.width/2 - info.origin.position.y) ,0)
+
+        for i in range(self.height):
+            for j in range(self.width):
                 if d[i*self.width + j] != -1:
-                    self.map_matrix[(i,j)] = d[i*self.width + j]
-        #self.map_matrix[(self.width/2 - int(self.robot_x),self.height/2 - int(self.robot_y))]= 200
-        #print("Robot in matrix",self.width/2 - int(self.robot_x), self.height/2 - int(self.robot_y))
-        xmin=self.width
-        xmax=0
-        ymin=self.height
-        ymax=0
-        print(self.robot_x, self.robot_y)
-        for (i,j) in self.map_matrix.keys():
-            if (i < xmin):
-                xmin = i
-            if (i > xmax):
-                xmax = i
-            if (j < ymin):
-                ymin = j
-            if (j > ymax):
-                ymax = j
-        for i in range(xmin,xmax):
-            for j in range(ymin,ymax):
-                if (i,j) not in self.map_matrix:
+                    self.map_matrix[(j, i)] = d[i*self.width + j]
+
+        self.map_matrix[(self.initial_pose[0] + self.position[0], self.initial_pose[1] + self.position[1])]= 200
+        for m in self.mannequins:
+            self.map_matrix[self.initial_pose[0] + m[0], self.initial_pose[1] +  m[1]] = 300
+        self.mannequins= []
+
+        xmin=min(self.map_matrix.keys(), key= lambda x: x[0])[0]
+        xmax=max(self.map_matrix.keys(), key= lambda x: x[0])[0]
+        ymin=min(self.map_matrix.keys(), key= lambda x: x[1])[1]
+        ymax=max(self.map_matrix.keys(), key= lambda x: x[1])[1]
+
+        for i in range(xmax,xmin, -1):
+            for j in range(ymax,ymin, -1):
+                if (i, j) == (int(self.width/2), int(self.width/2)):
+                    print("X", end = "")
+                elif (i,j) not in self.map_matrix:
                     print(" ", end = "")
                 elif self.map_matrix[(i,j)] == 0:
                     print("-", end = "")
@@ -53,6 +53,10 @@ class occupancy_grid:
                     print("#", end = "")
                 elif self.map_matrix[(i,j)] == 200:
                     print("@", end = "")
+                elif self.map_matrix[(i,j)] == 300:
+                    print("M", end = "")
+                elif self.map_matrix[(i,j)] == 300:
+                    print("X", end = "")
                 if len(self.mannequins) != 0:
                     if (i,j) in self.mannequins:
                         print("M", end = "")
@@ -61,25 +65,25 @@ class occupancy_grid:
 
     def mannequins2grid(self,data):
         mannequins = list(data.data)
+        print(mannequins)
         m = 0
         for i in range(0,len(mannequins)-1,2):
             angle = mannequins[i]
             distance = mannequins[i+1]
             # Calculate the manhatten distance split into x and y
-            x = distance * math.cos(angle) 
-            y = distance * math.sin(angle) 
+            x = distance * np.cos(angle + self.orientation) 
+            y = distance * np.sin(angle +self.orientation) 
             #print(x,y)
             try:
-                rmx = self.robot_x + x
-                rmy = self.robot_y + y
-                #print(rmx,rmy)
-                print("Robot pos: {}, {}".format(self.robot_x,self.robot_y))
+                rmx = self.position[0] + int(x/0.05)
+                rmy = self.position[1] + int(y/0.05)
+                print("Rob {}: {},{}".format(m,self.position[0],self.position[1]))
+                print("Mannequin {}: {},{}".format(m,int(x/0.05),int(y/0.05)))
                 print("Mannequin {}: {},{}".format(m,rmx,rmy))
-                mx,my = self.width/2 - rmx, self.height/2 - rmy
-                self.mannequins.append((mx,my))
-                print("Mannequin in matrix {}: {},{}".format(m,mx,my))
+                self.mannequins.append((rmx, rmy))
+                #print("Mannequin in matrix {}: {},{}".format(m,mx,my))
 
-                self.map_matrix[(mx,my)] = 'M'
+                #self.map_matrix[(mx,my)] = 'M'
                 #print(self.map_matrix[(mx,my)])
             except:
                 print("Mannequin out of range")
@@ -91,19 +95,11 @@ class occupancy_grid:
     def getpos(self, data):
         self.pose = data.pose.pose.position #x,y,z
         self.orient = data.pose.pose.orientation # x,y,z
-
-        #self.robot_x = round(self.pose.x, 4)
-        #self.robot_y = round(self.pose.y, 4)
-
         pos = self.getPoseStamped([self.pose.x, self.pose.y, self.pose.z, self.orient.x, self.orient.y, self.orient.z])
-        print(self.pose)
-        print("Orig---")
-        print(self.orient)
-        print(np.arctan2(self.orient.z, self.orient.w)*2)
-        print("Fix---")
-        print(pos.pose)
-        print(np.arctan2(pos.pose.orientation.z, pos.pose.orientation.w)*4)
-        print("---")
+        self.position = (int(pos.pose.position.x/0.05), int(pos.pose.position.y/0.05))
+        #print(self.position)
+        self.orientation = np.arctan2(self.orient.z, self.orient.w)*2
+        #print("---")
 
     def getPoseStamped(self, c):
         
@@ -141,6 +137,7 @@ class occupancy_grid:
         self.height = 0
         self.robot_x = 0
         self.robot_y = 0
+        self.position = (0,0)
         self.mannequins = []
         self.listener = tf.TransformListener()
         #print("Listening to map topic")
