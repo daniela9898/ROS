@@ -13,42 +13,6 @@ import cv2
 from nav_msgs.msg import Odometry
 
 class plot_robot_position:
-    def plot(self):
-            while True:
-                if len(self.new_mannequins) > 0:
-                    A = np.array(self.new_mannequins[::2])
-                    R = np.array(self.new_mannequins[1:][::2])
-
-                    # Consider also the robot orientation
-                    A = A + np.arctan2(self.orient.z, self.orient.w) * 2
-                    X = R * np.cos(A) + self.robot_x
-                    Y = R * np.sin(A) + self.robot_y            
-
-                    # Add the new mannequins to the list of visited mannequins
-                    for i in range(len(X)):
-                        self.visited_mannequins.append([X[i], Y[i]])
-                        
-                    fig = plt.figure(figsize=(4.10, 4.10), )
-                    plt.ylim(-1.7, 1.7)
-                    plt.xlim(-1.5, 1.5)
-                    plt.scatter(X , Y, color='blue')
-                    plt.scatter(self.robot_x,self.robot_y, color='red')
-                    plt.scatter(np.array(self.visited_mannequins)[:,0], np.array(self.visited_mannequins)[:,1], color='green')
-                
-                    fig.canvas.draw()
-                    #img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-                    img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-                    img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
-                    cv2.imshow("Mannequins", img)
-                    cv2.waitKey(100)
-
-                    plt.close(fig)
-                    
-                else:
-                    time.sleep(0.1)
-    
     def robot_position(self, data):
         self.pose = data.pose.pose.position
         self.orient = data.pose.pose.orientation
@@ -62,43 +26,52 @@ class plot_robot_position:
         self.robot_x = 0.0
         self.robot_y = 0.0
         self.new_mannequins = []
+        self.noise_plus_mannequins = []
         self.visited_mannequins = []
         ros.Subscriber('/mannequins', numpy_msg(Floats), self.__beacon_ros_sub)
         ros.Subscriber('/odom', Odometry, self.robot_position)
         while True:
-                if len(self.new_mannequins) > 0:
-                    A = np.array(self.new_mannequins[::2])
-                    R = np.array(self.new_mannequins[1:][::2])
+            if len(self.new_mannequins) > 0:
+                plt.switch_backend('agg')
+                A = np.array(self.new_mannequins[::2])
+                R = np.array(self.new_mannequins[1:][::2])
 
-                    # Consider also the robot orientation
-                    A = A + np.arctan2(self.orient.z, self.orient.w) * 2
-                    X = R * np.cos(A) + self.robot_x
-                    Y = R * np.sin(A) + self.robot_y            
+                # Consider also the robot orientation
+                A = A + np.arctan2(self.orient.z, self.orient.w) * 2
+                X = R * np.cos(A) + self.robot_x
+                Y = R * np.sin(A) + self.robot_y            
 
-                    # Add the new mannequins to the list of visited mannequins
-                    for i in range(len(X)):
-                        self.visited_mannequins.append([X[i], Y[i]])
-                        
-                    fig = plt.figure(figsize=(4.10, 4.10), )
-                    plt.ylim(-1.7, 1.7)
-                    plt.xlim(-1.5, 1.5)
-                    plt.scatter(X , Y, color='blue')
-                    plt.scatter(self.robot_x,self.robot_y, color='red')
-                    plt.scatter(np.array(self.visited_mannequins)[:,0], np.array(self.visited_mannequins)[:,1], color='green')
+                # Add the new mannequins to the list of visited mannequins
+                for i in range(len(X)):
+                    self.noise_plus_mannequins.append([X[i], Y[i]])
                 
-                    fig.canvas.draw()
-                    #img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-                    img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-                    img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                # Save a coordinate of noise_plus_mannequins in visited_mannequins only if the measurement apears more than 3 times in noise_plus_mannequins
+                for i in range(len(self.noise_plus_mannequins)):
+                    if self.noise_plus_mannequins.count(self.noise_plus_mannequins[i]) >= 3:
+                        self.visited_mannequins.append(self.noise_plus_mannequins[i])
+                
+                #plotting the robot position and the mannequins position
+                fig = plt.figure(figsize=(4.10, 4.10), )
+                plt.ylim(-1.7, 1.7)
+                plt.xlim(-1.5, 1.5)
+                plt.scatter(X , Y, color='blue')
+                plt.scatter(self.robot_x,self.robot_y, color='red')
+                if self.visited_mannequins != []:
+                    plt.scatter(np.array(self.visited_mannequins)[:,0], np.array(self.visited_mannequins)[:,1], color='green')
+            
+                fig.canvas.draw()
+                #img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+                img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+                img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-                    cv2.imshow("Mannequins", img)
-                    cv2.waitKey(100)
+                cv2.imshow("Mannequins", img)
+                cv2.waitKey(100)
 
-                    plt.close(fig)
-                    
-                else:
-                    time.sleep(0.1)
+                plt.close(fig)
+                
+            else:
+                time.sleep(0.1)
 
 if __name__ == '__main__':
     ros.init_node('plot_robot_position')

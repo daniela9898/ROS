@@ -1,3 +1,9 @@
+# "In this script, we implement the use of computer vision 
+# for recognizing our mannequins. Specifically, the code is able to 
+# identify the mannequin only if it has a QR code in front of it. 
+# We have modified certain parameters to enable our turtlebot3 to 
+# effectively recognize the mannequins under varying illumination conditions."
+
 import sys
 import time
 import tkinter
@@ -299,28 +305,7 @@ class MannequinDetector:
         """
         # Convert msg data (bitstring) to OpenCV image (np.ndarray) and store in placeholder
         self.cam_image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)[::-1, ::-1]
-
         self.cam_stamp = msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9
-
-        self.qr_code_detection(self.cam_image)
-
-        if True:
-            cv2.namedWindow('test')
-            cv2.imshow('test', self.cam_image)
-            cv2.waitKey()
-            cv2.destroyWindow('test')
-
-    def qr_code_detection(self, img):
-
-        qr_result = decode(img)
-        if not qr_result:
-            print('no qr code')
-        else:
-            qr_data = qr_result[0].data
-            qr_data = qr_data.decode("utf-8")
-            print(qr_data)
-
-
 
     def start_ros(self) -> None:
         """
@@ -351,9 +336,7 @@ class MannequinDetector:
         self.update()
 
         # After that, we start the main loop, and Tkinter will take care of the rest
-        #self.gui["root"].mainloop()
-        while True:
-            time.sleep(1)
+        self.gui["root"].mainloop()
 
     def update(self) -> None:
         """
@@ -421,7 +404,7 @@ class MannequinDetector:
         # interested in color theory, read https://en.wikipedia.org/wiki/HSL_and_HSV, or watch
         # https://youtu.be/qFXYPHE7fIo if you're a nerd like me.
 
-        img = self.cam_image
+
         # start qr detector
         (rows, cols, channels) = img.shape
 
@@ -430,17 +413,24 @@ class MannequinDetector:
         img_bw = cv2.threshold(img1, thresh, 255, cv2.THRESH_BINARY)[1]
 
         qr_result = decode(img_bw)
-        if not qr_result:
-            print("not qr code")
-        else:
+        qr_code = 0
+        if qr_result:
             qr_data = qr_result[0].data
             qr_data = qr_data.decode("utf-8")
             print(qr_data)
 
+            f="FRONT"
+            if f in qr_data:
+                qr_code = 1
 
         # end qr detector
 
 
+        # start line detector
+        gray: np.ndarray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 75, 150)
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 70, maxLineGap=250)
+        # end line detector
         img2: np.ndarray = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         # Filter for green over hue channel
@@ -448,8 +438,11 @@ class MannequinDetector:
         mask_saturation = img2[..., 1] > self.SAT_MINUMUM  # Ditch pixels that are too pastel (grey-ish)
         mask_value = img2[..., 2] > self.VAL_MINIMUM  # Ditch pixels that are too dark
         # Combine masks
+        #if qr_code :
+        #    print("here")
         mask = mask_hue * mask_saturation * mask_value
-
+        #else:
+        #    mask = np.zeros([rows, cols])
         # Make the mask blurry to help the blob detector
         mask = cv2.blur(mask.astype(np.uint8) * 255, (10, 10))
 
@@ -524,7 +517,7 @@ class MannequinDetector:
         :param fig:
         :return:
         """
-        fig.canvas.draw()
+        fig.canvas.draw()             
         assert fig.canvas.get_width_height()[::-1] + (3,) == img.shape
 
         mask_line = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
