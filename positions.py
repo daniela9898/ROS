@@ -60,8 +60,11 @@ class plot_robot_position:
                 self.updateMannequinMap(Xmap[i], Ymap[i])
 
             mann_list = Float32MultiArray()
-            mann_list.data = [item for t in list(self.mannequins.keys()) for item in t]
-            print(self.mannequins)
+            key_list = list(self.mannequins.keys())
+            key_list.sort(key=lambda x: abs(x[0]-self.pose.x) + abs(x[1]-self.pose.y))
+            mann_list.data = [item for t in key_list for item in t]
+            print(self.mannequins.keys())
+            print(key_list)
             print(mann_list)
             self.mannequins_pub.publish(mann_list)		
 
