@@ -14,7 +14,8 @@ from nav_msgs.msg import Odometry
 import tf
 import tf.transformations as tft
 from scipy.signal import savgol_filter
-
+from pynput import keyboard
+import os 
 
 class plot_robot_position:
 
@@ -31,7 +32,26 @@ class plot_robot_position:
     def __beacon_ros_sub(self, data):
         self.new_mannequins = data.data
 
+    def on_press(self,key):
+        #If shift + c is pressed the program will stop
+        COMBINATION = {keyboard.Key.shift, keyboard.Key.c}
+        try:
+            if key in COMBINATION:
+                print('The program has been stopped')
+                os._exit(0)
+                return False
+        except AttributeError:
+            pass
+
+    def for_canonical(self,f):
+        return lambda k: f(self.listener.canonical(k))
+
     def __init__(self):
+        hotkey = keyboard.HotKey(keyboard.HotKey.parse('<ctrl>+c'),self.on_press)
+        with keyboard.Listener(on_press=self.for_canonical(hotkey.press),on_release=self.for_canonical(hotkey.release)) as self.listener:self.listener.join()
+        #listener = keyboard.Listener(on_press=self.on_press)
+        #listener.start()  # start to listen on a separate thread
+        #listener.join()  # remove if main thread is polling self.key
         self.robot_x = 0.0
         self.robot_y = 0.0
         self.new_mannequins = []
@@ -65,12 +85,12 @@ class plot_robot_position:
                     plt.switch_backend("agg")
                     A = np.array(self.new_mannequins[::2])
                     R = np.array(self.new_mannequins[1:][::2])
-                    print(A)
+                    #print(A)
                     # compute relative position of the mannequin
                     x = R * np.cos(A)   #relative position
                     y = R * np.sin(A)   #relative position
                     z = 0 #relative position
-                    fig = plt.figure(figsize=(4.10, 4.10), )
+                    fig = plt.figure(figsize=(5, 5), )
                     plt.ylim(-1.7, 1.7)
                     plt.xlim(-1.5, 1.5)
 
@@ -78,9 +98,12 @@ class plot_robot_position:
                     X = self.robot_x + np.cos(self.orient)*x - np.sin(self.orient)*y
                     Y = self.robot_y + np.sin(self.orient)*x + np.cos(self.orient)*y
 
-
+                    #print("Manniquins: ", X, Y)
                     plt.scatter(X , Y, color='blue')
                     plt.scatter(self.robot_x,self.robot_y, color='red')
+
+                    plt.xlabel('Y', fontsize=18)
+                    plt.ylabel('X', fontsize=16)
 
                     # M = np.eye(4)
                     # M[:3, :3] = rot

@@ -15,8 +15,10 @@ class mannequins_goal:
     def goal_point(self,point):
         goals = MoveBaseGoal()
         goals.target_pose.header.frame_id = 'odom'
-        goals.target_pose.pose.position.x = point[0]
-        goals.target_pose.pose.position.y = point[1]
+        #goals.target_pose.pose.position.x = point[0]
+        #goals.target_pose.pose.position.y = point[1]
+        goals.target_pose.pose.position.x = 1
+        goals.target_pose.pose.position.y = 1
         goals.target_pose.pose.position.z = 0
         goals.target_pose.pose.orientation.x = 0
         goals.target_pose.pose.orientation.y = 0

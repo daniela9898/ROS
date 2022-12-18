@@ -26,6 +26,7 @@ def launch():
         )
     except:
         sys.exit("The specified environment couldn't be found")
+    
     gazebo_launcher = roslaunch.parent.ROSLaunchParent(uuid, [gazebo_path])
     gazebo_launcher.start(auto_terminate=False)
     
@@ -36,24 +37,26 @@ def launch():
     if first_son == 0:
         try:
     	    slam_path = (
-		    f"{packager.get_path('turtlebot3_slam')}/launch/turtlebot3_slam.launch",
-		    "open_rviz:=false",
-			)
+                f"{packager.get_path('turtlebot3_slam')}/launch/turtlebot3_slam.launch", 
+                "open_rviz:=false", 
+            )
         except:
             sys.exit("The SLAM package couldn't be found")
             
         slam_launcher = roslaunch.parent.ROSLaunchParent(uuid, [slam_path])
-        slam_launcher.start()
+        slam_launcher.start(auto_terminate=False)
 			
     if second_son == 0:
         try:
-            navigation_path = f"{packager.get_path('turtlebot3_navigation')}/launch/turtlebot3_navigation.launch",
+            navigation_path = (
+                f"{packager.get_path('turtlebot3_navigation')}/launch/turtlebot3_navigation.launch",
             "open_rviz:=false",
+            )
         except:
             sys.exit("The navigation package couldn't be found")
             
         navigation_launcher = roslaunch.parent.ROSLaunchParent(uuid, [navigation_path]) 
-        navigation_launcher.start()
+        navigation_launcher.start(auto_terminate=False)
     
     #lam_launcher = roslaunch.child.ROSLaunchParent(uuid, [slam_path])
     #slam_launcher.start()

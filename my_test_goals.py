@@ -29,7 +29,7 @@ if __name__ == '__main__':
     rospy.init_node('nav')
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     client.wait_for_server()
-    goal_position = [[1.0,0],[-1.0,0]]
+    goal_position = [[0.5, -0.5],[-0.5, -0.5]]
 
     for i in range(len(goal_position)): 
         while not rospy.is_shutdown():
