@@ -1,23 +1,22 @@
 <launch>
-  <!-- 1. Sets the turtlebot3 model (to burger). This argument is -->
-  <!--  used when loading meshes, etc. when building the model -->
-  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type
-  [burger, waffle, waffle_pi]"/>
+
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
 
   <!-- Start the ROS server with an empty world. -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-
+  
     <!-- Point to our *.world file that adds the light and ground -->
     <arg name="world_name" value="$(find christmas_party_simulation)/worlds/christmas_party.world"/>
     <arg name="paused" value="false"/>
   </include>
+
   
-  <!-- 2. finds our turtlebot3_christmas.urdf.xacro file, converts-->
-  <!--   it to *.sdf and stores the resulting SDF model description -->
-  <!--   in "robot_description" -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_custom)/urdf/turtlebot3_christmas.urdf.xacro" />
-  <!-- 3. spawns the turtlebot3 robot in the simulation, using the-->
-  <!--description in "robot_description" to build the model-->
-  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_christmas -x 0 -y 0 -z 0 -param robot_description" />
- 
+  <param name="robot_description"
+      command="$(find xacro)/xacro --inorder $(find turtlebot3_custom)/urdf/turtlebot3_christmas.urdf.xacro" />
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"
+      args="-urdf -model turtlebot3_christmas -x 0 -y 0 -z 0 -param robot_description" />
+  
+  <node pkg="christmas_party_simulation" type="cheaty_mannequin_detector" name="oracle" output="screen"></node>
+  
 </launch>
+

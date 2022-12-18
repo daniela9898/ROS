@@ -12,6 +12,7 @@ from gazebo_msgs.srv import GetWorldProperties, GetModelState
 from rospy import Publisher, Subscriber
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
+from tf.transformations import euler_from_quaternion
 
 
 class CheatyMannequinPublisher:
@@ -49,7 +50,7 @@ class CheatyMannequinPublisher:
 
         self.gazebo_sub = ros.Subscriber(self.gazebo_sub_name, ModelStates, callback=self.__gazebo_ros_sub,
                                          queue_size=self.QUEUE_SIZE)
-        self.mannequin_pub = ros.Publisher(self.mannequin_pub_name, numpy_msg(Floats), queue_size=self.QUEUE_SIZE)
+        self.beacon_pub = ros.Publisher(self.mannequin_pub_name, numpy_msg(Floats), queue_size=self.QUEUE_SIZE)
 
     def run(self):
         """
@@ -65,18 +66,34 @@ class CheatyMannequinPublisher:
                 turtle_x = self.model_states['turtlebot3_christmas']['pose'].position.x
                 turtle_y = self.model_states['turtlebot3_christmas']['pose'].position.y
 
+                # Get the orientation of the turtlebot
+                quaternion = self.model_states['turtlebot3_christmas']['pose'].orientation
+                _,_,turtle_ang = euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
+
+
                 # Get the aboslute locations of the mannequins
                 mannequins = []
+
+
                 for mannequin in ('mannequin_NW', 'mannequin_NE', 'mannequin_SE', 'mannequin_SW'):
                     # Determine relative position
-                    mannequins.append(self.model_states[mannequin]['pose'].position.x - turtle_x
-                                   + random.gauss(0, self.NOISE_STDDEV))
-                    mannequins.append(self.model_states[mannequin]['pose'].position.y - turtle_y
-                                   + random.gauss(0, self.NOISE_STDDEV))
+                    man_x = self.model_states[mannequin]['pose'].position.x - turtle_x
+                    man_y = self.model_states[mannequin]['pose'].position.y - turtle_y
+                    
+                    man_distance = (man_x ** 2 + man_y ** 2) ** .5
+                    man_angle = np.arctan2(man_y, man_x) - turtle_ang
+                    man_angle = (man_angle + np.pi) % (2*np.pi) - np.pi
+
+                    mannequins.append(man_angle)
+                    mannequins.append(man_distance)
+                    #mannequins.append(self.model_states[mannequin]['pose'].position.x - turtle_x
+                    #               + random.gauss(0, self.NOISE_STDDEV))
+                    #mannequins.append(self.model_states[mannequin]['pose'].position.y - turtle_y
+                    #               + random.gauss(0, self.NOISE_STDDEV))
 
                 # Publish mannequin locations to /mannequins
                 mannequins = np.array(mannequins, dtype=np.float32)
-                self.mannequin_pub.publish(mannequins)
+                self.beacon_pub.publish(mannequins)
 
             except (KeyError, TypeError):
                 # Some data is not available, try again next tick
@@ -96,7 +113,10 @@ class CheatyMannequinPublisher:
             self.model_states[model] = {'pose': msg.pose[ii], 'twist': msg.twist[ii]}
 
 
-if __name__ == '__main__':
+def main():
     publisher = CheatyMannequinPublisher()
     publisher.start_ros()
     publisher.run()
+
+if __name__ == '__main__':
+    main()

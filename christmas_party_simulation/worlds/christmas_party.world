@@ -8,20 +8,46 @@
       <shadows>true</shadows>
     </scene>
 
+    <!-- Add a light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
     <!-- Add the ground -->
     <include>
       <uri>model://ground_plane</uri>
     </include>
+
     <!-- Add walls -->
     <include>
         <uri>model://walls</uri>
-
-        <!-- The two lines below are optional -->
         <name>Christmas_Walls</name>
         <pose>0 0 0 0 0 0</pose>
-
     </include>
 
+    <include>
+      <uri>model://mannequin</uri>
+      <name>mannequin_NW</name>
+      <pose>1 1.5 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://mannequin</uri>
+      <name>mannequin_NE</name>
+      <pose>1 -1.5 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://mannequin</uri>
+      <name>mannequin_SE</name>
+      <pose>-1 -1.5 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://mannequin</uri>
+      <name>mannequin_SW</name>
+      <pose>-1 1.5 0 0 0 0</pose>
+    </include>
 
 
   </world>
