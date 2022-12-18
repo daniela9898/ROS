@@ -11,6 +11,7 @@ from rospy_tutorials.msg import Floats
 import numpy as np
 import cv2
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Int32MultiArray
 import tf
 import tf.transformations as tft
 from scipy.signal import savgol_filter
@@ -29,7 +30,7 @@ class plot_robot_position:
         pos = self.getPoseStamped([self.pose.x, self.pose.y, self.pose.z, o[0], o[1], o[2]])
         if pos is not None:
             self.pose = pos.pose.position
-            self.orientation = pos.pose.orientation
+            #self.orient = pos.pose.orientation
             self.odom_pub.publish(pos)
         else:
             self.odom_pub.publish(data.pose)
@@ -37,98 +38,65 @@ class plot_robot_position:
         #print(self.pose)
         #print(self.orient)
         #print("/////////////")
-        
-
-
-        #publish pos, or data in pos == None
-
-
 
 
     def __beacon_ros_sub(self, data):
-        self.new_mannequins = data.data
+        if len(data.data) > 0:
+            ori = np.arctan2(self.orient.z, self.orient.w)*2
+            A = np.array(data.data[::2])
+            R = np.array(data.data[1:][::2])
+            # compute relative position of the mannequin
+            x = R * np.cos(A)   #relative position
+            y = R * np.sin(A)   #relative position
+
+            # convert relative position to absolute position
+            X = self.pose.x + np.cos(ori)*x - np.sin(ori)*y
+            Y = self.pose.y + np.sin(ori)*x + np.cos(ori)*y
+
+            Xmap = (X/0.05).astype(int)
+            Ymap = (Y/0.05).astype(int)
+
+            for i in range(len(Xmap)):
+                self.updateMannequinMap(Xmap[i], Ymap[i])
+
+            mann_list = Int32MultiArray()
+            mann_list.data = [item for t in list(self.mannequins.keys()) for item in t]
+            print(list(self.mannequins.keys()))
+            print(mann_list)
+            self.mannequins_pub.publish(mann_list)		
+
 
     def __init__(self):
-        self.robot_x = 0.0
-        self.robot_y = 0.0
-        self.new_mannequins = []
-        self.visited_mannequins = []
-        self.pos_mannequins = []
-        self.a = 0
+        self.mannequins = {}
         self.transform_matrix = np.zeros((4, 4))
 
         self.listener = tf.TransformListener()
         self.odom_pub = ros.Publisher('odom_fixed', PoseStamped, queue_size=10)
+        self.mannequins_pub = ros.Publisher('mannequins_position', Int32MultiArray, queue_size=10)
 
 
         ros.Subscriber('/mannequins', numpy_msg(Floats), self.__beacon_ros_sub)
         ros.Subscriber('/odom', Odometry, self.robot_position)
 
-        trans = []
-        rot = []
+    def updateMannequinMap(self, Xmap, Ymap):
+        self.mannequins[(Xmap, Ymap)] = 1.0
 
+        for k in self.mannequins.keys():
+            if k != (Xmap, Ymap):   #TODO: if distance  > X dont substract
+                self.panalizeCell(k[0], k[1], 1.0/(abs(k[0]-Xmap) + abs(k[1] - Ymap) ))
+        delkeys = []
+        for k in self.mannequins.keys():
+            if self.mannequins[k] <= 0.5:
+                delkeys.append(k)
+        for k in delkeys:
+            del self.mannequins[k]
 
-        while False:
-                if len(self.new_mannequins) > 0:
-                    #get translation and rotation matrix
-                    # try:
-                    #     # tranformation
-                    #     (trans, rot) = t.lookupTransform('/map', '/camera_link', ros.Time.now())
-                    #
-                    # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                    #     continue
+    def panalizeCell(self, X, Y, pen):
+        if (X, Y) in self.mannequins.keys():
+            self.mannequins[(X, Y)] -= pen 
 
-                    # print(trans)
-                    # print(rot)
+       
 
-
-                    plt.switch_backend("agg")
-                    A = np.array(self.new_mannequins[::2])
-                    R = np.array(self.new_mannequins[1:][::2])
-                    print(A)
-                    # compute relative position of the mannequin
-                    x = R * np.cos(A)   #relative position
-                    y = R * np.sin(A)   #relative position
-                    z = 0 #relative position
-                    fig = plt.figure(figsize=(4.10, 4.10), )
-                    plt.ylim(-1.7, 1.7)
-                    plt.xlim(-1.5, 1.5)
-
-                    # convert relative position to absolute position
-                    X = self.robot_x + np.cos(self.orient)*x - np.sin(self.orient)*y
-                    Y = self.robot_y + np.sin(self.orient)*x + np.cos(self.orient)*y
-
-
-                    plt.scatter(X , Y, color='blue')
-                    plt.scatter(self.robot_x,self.robot_y, color='red')
-
-                    # M = np.eye(4)
-                    # M[:3, :3] = rot
-                    # M[:3, 3] = trans
-                    # transform x, y, z with trans and rot
-
-
-                    # fig = plt.figure(figsize=(4.10, 4.10), )
-                    # plt.ylim(-1.7, 1.7)
-                    # plt.xlim(-1.5, 1.5)
-
-                    # plt.scatter(x_abs , y_abs, color='blue')
-                    # plt.scatter(self.robot_x,self.robot_y, color='red')
-
-                
-                    fig.canvas.draw()
-                    #img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-                    img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-                    img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
-                    cv2.imshow("Mannequins", img)
-                    cv2.waitKey(100)
-
-                    plt.close(fig)
-                    
-                else:
-                    time.sleep(0.1)
 
     def getPoseStamped(self, c):
         
