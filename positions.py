@@ -11,7 +11,7 @@ from rospy_tutorials.msg import Floats
 import numpy as np
 import cv2
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Float32MultiArray
 import tf
 import tf.transformations as tft
 from scipy.signal import savgol_filter
@@ -53,15 +53,18 @@ class plot_robot_position:
             X = self.pose.x + np.cos(ori)*x - np.sin(ori)*y
             Y = self.pose.y + np.sin(ori)*x + np.cos(ori)*y
 
-            Xmap = (X/0.05).astype(int)
-            Ymap = (Y/0.05).astype(int)
+            Xmap = X
+            Ymap = Y
 
             for i in range(len(Xmap)):
                 self.updateMannequinMap(Xmap[i], Ymap[i])
 
-            mann_list = Int32MultiArray()
-            mann_list.data = [item for t in list(self.mannequins.keys()) for item in t]
-            print(list(self.mannequins.keys()))
+            mann_list = Float32MultiArray()
+            key_list = list(self.mannequins.keys())
+            key_list.sort(key=lambda x: abs(x[0]-self.pose.x) + abs(x[1]-self.pose.y))
+            mann_list.data = [item for t in key_list for item in t]
+            print(self.mannequins.keys())
+            print(key_list)
             print(mann_list)
             self.mannequins_pub.publish(mann_list)		
 
@@ -72,7 +75,7 @@ class plot_robot_position:
 
         self.listener = tf.TransformListener()
         self.odom_pub = ros.Publisher('odom_fixed', PoseStamped, queue_size=10)
-        self.mannequins_pub = ros.Publisher('mannequins_position', Int32MultiArray, queue_size=10)
+        self.mannequins_pub = ros.Publisher('mannequins_position', Float32MultiArray, queue_size=10)
 
 
         ros.Subscriber('/mannequins', numpy_msg(Floats), self.__beacon_ros_sub)
@@ -83,7 +86,7 @@ class plot_robot_position:
 
         for k in self.mannequins.keys():
             if k != (Xmap, Ymap):   #TODO: if distance  > X dont substract
-                self.panalizeCell(k[0], k[1], 1.0/(abs(k[0]-Xmap) + abs(k[1] - Ymap) ))
+                self.panalizeCell(k[0], k[1], 0.1/(abs(k[0]-Xmap) + abs(k[1] - Ymap) ))
         delkeys = []
         for k in self.mannequins.keys():
             if self.mannequins[k] <= 0.5:
