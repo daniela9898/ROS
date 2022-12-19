@@ -5,7 +5,7 @@ import os
 from subprocess import Popen, PIPE
 
 def save_map():
-    path = f"{os.path.expanduser('~')}/catkin_ws/src/christmas_party_simulation/maps/map"
+    path = f"{os.path.expanduser('~')}/catkin_ws/src/christmastinator/maps/map"
     print(path)
     command = "rosrun map_server map_saver -f " + path
     print(command)
@@ -14,13 +14,13 @@ def save_map():
 
 
 def remove_map():
-    if os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmas_party_simulation/maps/map.yaml"):
-        os.remove(f"{os.path.expanduser('~')}/catkin_ws/src/christmas_party_simulation/maps/map.yaml")
-    if os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmas_party_simulation/maps/map.pgm"):
-        os.remove(f"{os.path.expanduser('~')}/catkin_ws/src/christmas_party_simulation/maps/map.pgm")
+    if os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmastinator/maps/map.yaml"):
+        os.remove(f"{os.path.expanduser('~')}/catkin_ws/src/christmastinator/maps/map.yaml")
+    if os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmastinator/maps/map.pgm"):
+        os.remove(f"{os.path.expanduser('~')}/catkin_ws/src/christmastinator/maps/map.pgm")
 
 def wait_for_map():
-    while not os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmas_party_simulation/maps/map.yaml") or not os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmas_party_simulation/maps/map.pgm"):
+    while not os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmastinator/maps/map.yaml") or not os.path.exists(f"{os.path.expanduser('~')}/catkin_ws/src/christmastinator/maps/map.pgm"):
         pass
     time.sleep(0.5)
 
@@ -41,7 +41,7 @@ def run_slam():
     return p
 
 def run_navigation():
-    roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(['turtlebot3_navigation', 'turtlebot3_navigation.launch'])[0], ['map_file:=$(env HOME)/catkin_ws/src/christmas_party_simulation/maps/slam.yaml'])]
+    roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(['turtlebot3_navigation', 'turtlebot3_navigation.launch'])[0], ['map_file:=$(env HOME)/catkin_ws/src/christmastinator/maps/map.yaml'])]
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
     p = roslaunch.parent.ROSLaunchParent(uuid, roslaunch_file)
     p.start()
@@ -49,16 +49,16 @@ def run_navigation():
 
 
 def run_mannequin_detector():
-    command = "python3 mannequin_detector_old.py"
+    command = "python mannequin_detector_old.py"
     p = Popen(command, shell=True, stdout=PIPE)
 
 
 def run_positions():
-    command = "python3 positions.py"
+    command = "python positions.py"
     p = Popen(command, shell=True, stdout=PIPE)
     
 def run_goals():
-    command = "python3 mannequins_goal.py"
+    command = "python mannequins_goal.py"
     p = Popen(command, shell=True, stdout=PIPE)
 	
 if __name__ == '__main__':
