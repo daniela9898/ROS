@@ -1,0 +1,9 @@
+For running:
+
+    1. Run SLAM -> roslaunch turtlebot3_slam turtlebot3_slam.launch
+    2. Save map -> rosrun map_server map_saver -f /home/felix/catkin_ws/src/christmas_party_simulation/maps/slam
+    3. Close SLAM
+    4. Run navigation -> roslaunch turtlebot3_navigation turtlebot3_navigation.launch
+    5. In the RViz window, mark estimated initial position of robot 
+    6. Launch mannequin_detector.py
+    7. .........

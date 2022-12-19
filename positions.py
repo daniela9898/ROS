@@ -18,7 +18,7 @@ from scipy.signal import savgol_filter
 from geometry_msgs.msg import PoseStamped
 
 
-class plot_robot_position:
+class Position:
 
     def robot_position(self, data):
         self.pose = data.pose.pose.position #x,y,z
@@ -33,7 +33,10 @@ class plot_robot_position:
             #self.orient = pos.pose.orientation
             self.odom_pub.publish(pos)
         else:
-            self.odom_pub.publish(data.pose)
+			pose = PoseStamped()
+			pose.header = data.header
+			pose.pose = self.pose.pose
+            self.odom_pub.publish(pose)
         #print("/////////////")
         #print(self.pose)
         #print(self.orient)
@@ -64,8 +67,8 @@ class plot_robot_position:
             key_list.sort(key=lambda x: abs(x[0]-self.pose.x) + abs(x[1]-self.pose.y))
             mann_list.data = [item for t in key_list for item in t]
             print(self.mannequins.keys())
-            print(key_list)
-            print(mann_list)
+            #print(key_list)
+            #print(mann_list)
             self.mannequins_pub.publish(mann_list)		
 
 
@@ -133,7 +136,7 @@ class plot_robot_position:
 
 if __name__ == '__main__':
     ros.init_node('plot_robot_position')
-    plot_robot_position()
+    Position()
     ros.spin()
 
     

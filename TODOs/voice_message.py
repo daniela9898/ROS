@@ -9,7 +9,6 @@ import numpy as np
 import rospy as ros
 from rospy import Subscriber
 from rospy_tutorials.msg import Floats
-from std_msgs.msg import String
 import matplotlib.pyplot as plt
 import pygame
 
@@ -19,31 +18,29 @@ class produceVoiceMessage:
     def __init__(self, name: str = "voice_message"):  
         self.node_name: str = name
         # Declare additional ROS listener
-        self.beacon_sub_name: str = "qr_codes"   #name of the ros topic
+        self.beacon_sub_name: str = "/mannequins"   #name of the ros topic
         self.beacon_sub: Union[None, Subscriber]   #Subscriber object to receive messages
-        self.beacons: Union[None, np.ndarray] = None  #store the received qr_codes information
+        self.beacons: Union[None, np.ndarray] = None  #store the received mannequin information
         
     def start_ros(self) -> None:
         ros.init_node(self.node_name, log_level=ros.INFO) #initialization of the node
-        self.beacon_sub = ros.Subscriber(self.beacon_sub_name, String, callback=self.__beacon_ros_sub, queue_size=self.QUEUE_SIZE)    
+        self.beacon_sub = ros.Subscriber(self.beacon_sub_name, Floats, callback=self.__beacon_ros_sub, queue_size=self.QUEUE_SIZE)    
                          
     def __beacon_ros_sub(self, msg):
         self.beacons = msg.data
 
     def run(self):
-        if self.beacons is not None:
-            if "FRONT" in self.beacons:
-                soundhandle = SoundClient(blocking=True)
-                soundhandle.say('This is your drink, Merry Christmas!!!')
-                ros.sleep(1)
-             else:
-                ros.logwarn("No data received on /qr_codes topic yet")
+
+        soundhandle = SoundClient(blocking=True)
+
+        soundhandle.say('This is your drink, Merry Christmas!!!')
+
+        ros.sleep(1)
 
 def main():
     l = produceVoiceMessage()
     l.start_ros()
-    while True:
-    	l.run()
+    l.run()
 
 
 if __name__ == '__main__':
