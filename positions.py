@@ -31,11 +31,11 @@ class Position:
         if pos is not None:
             self.pose = pos.pose.position
             #self.orient = pos.pose.orientation
-            self.odom_pub.publish(pos)
+            self.odom_pub.publish(pos)  
         else:
-			pose = PoseStamped()
-			pose.header = data.header
-			pose.pose = self.pose.pose
+            pose = PoseStamped()
+            pose.header = data.header
+            pose.pose = self.pose.pose
             self.odom_pub.publish(pose)
         #print("/////////////")
         #print(self.pose)

@@ -6,7 +6,7 @@
 # This topic is Boolean, where True means that an object is near 
 # scan_node.py uses Lidar.py to calculate the distance to an obstacle
 
-import rospy
+import rospy as ros
 import matplotlib.pyplot as plt
 from datetime import datetime
 from itertools import product
@@ -25,7 +25,7 @@ from nav_msgs.msg import OccupancyGrid
 #******extract robot position ***********
 class occupancy_grid:
 
-    def data2matrix(data):
+    def data2matrix(self,data):
         print("Converting data to matrix")
         info = data.info
         self.robot_x = info.origin.position.x
@@ -67,10 +67,10 @@ class occupancy_grid:
 
     def listener():
         print("Listening to map topic")
-        rospy.Subscriber("map", OccupancyGrid, occupancy_grid.data2matrix)
-        rospy.spin()
+        ros.Subscriber("map", OccupancyGrid, occupancy_grid.data2matrix)
+        ros.spin()
     
-    def get_position():
+    def get_position(self):
         return self.robot_x, self.robot_y
         
 ros.init_node('occupancy_grid', anonymous = False)
@@ -105,12 +105,12 @@ def createStateSpace():
 if __name__ == '__main__':
     try:
         
-        pub = rospy.Publisher('crash_detection', std_msgs.msg.Bool, queue_size=None)
+        pub = ros.Publisher('crash_detection', std_msgs.msg.Bool, queue_size=None)
         
         state_space = createStateSpace()
 
-        rospy.init_node('scan_node', anonymous = False)
-        rate = rospy.Rate(10)
+        ros.init_node('scan_node', anonymous = False)
+        rate = ros.Rate(10)
 
         now = datetime.now()
         dt_string_start = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -119,12 +119,12 @@ if __name__ == '__main__':
         scan_time = 0
         count = 0
 
-        t_0 = rospy.Time.now()
-        t_start = rospy.Time.now()
+        t_0 = ros.Time.now()
+        t_start = ros.Time.now()
 
         # init timer
         while not (t_start > t_0):
-            t_start = rospy.Time.now()
+            t_start = ros.Time.now()
 
         t = t_start
 
@@ -134,18 +134,18 @@ if __name__ == '__main__':
         ax = fig.add_subplot(1,1,1)
         
         # main loop
-        while not rospy.is_shutdown():
+        while not ros.is_shutdown():
             
-            msgScan = rospy.wait_for_message('/scan', LaserScan)
+            msgScan = ros.wait_for_message('/scan', LaserScan)
 
-            scan_time = (rospy.Time.now() - t).to_sec()
-            sim_time = (rospy.Time.now() - t_start).to_sec()
+            scan_time = (ros.Time.now() - t).to_sec()
+            sim_time = (ros.Time.now() - t_start).to_sec()
             count = count + 1
 
             if scan_time > MIN_TIME_BETWEEN_SCANS:
                 print('\r\nScan cycle:', count , '\r\nScan time:', scan_time, 's')
                 print('Simulation time:', sim_time, 's')
-                t = rospy.Time.now()
+                t = ros.Time.now()
 
                 # distances in [m], angles in [degrees]
                 ( lidar, angles ) = lidarScan(msgScan) #function to parse the LIDAR data and extract the distance measurements for each angle                
@@ -224,16 +224,16 @@ if __name__ == '__main__':
                 dt_string_stop = now.strftime("%d/%m/%Y %H:%M:%S")
                 print('\r\nSCAN NODE START ==> ', dt_string_start ,'\r\n')
                 print('SCAN NODE STOP ==> ', dt_string_stop ,'\r\n')
-                rospy.signal_shutdown('End of simulation')
+                ros.signal_shutdown('End of simulation')
 
             rate.sleep()
 
-    except rospy.ROSInterruptException:
+    except ros.ROSInterruptException:
         now = datetime.now()
         dt_string_stop = now.strftime("%d/%m/%Y %H:%M:%S")
         print('\r\nSCAN NODE START ==> ', dt_string_start ,'\r\n')
         print('SCAN NODE STOP ==> ', dt_string_stop ,'\r\n')
-        rospy.signal_shutdown('End of simulation')
+        ros.signal_shutdown('End of simulation')
 
         pass
 

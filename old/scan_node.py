@@ -110,8 +110,8 @@ if __name__ == '__main__':
                     y_horizon = np.append(y_horizon,lidar_horizon[i] * np.sin(radians(angles_horizon[i])))
 
                 ax.clear()
-                plt.xlabel('distance[m]')
-                plt.ylabel('distance[m]')
+                plt.xlabel('Y')
+                plt.ylabel('X')
                 plt.xlim((-1.0,1.0))
                 plt.ylim((-0.2,1.2))
                 plt.title('Lidar horizon')
