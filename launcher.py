@@ -48,7 +48,18 @@ def run_navigation():
     return p
 
 
+def run_mannequin_detector():
+    command = "python mannequin_detector_old.py"
+    p = Popen(command, shell=True, stdout=PIPE)
+
+
+def run_positions():
+    command = "python positions.py"
+    p = Popen(command, shell=True, stdout=PIPE)
     
+def run_goals():
+    command = "python mannequins_goal.py"
+    p = Popen(command, shell=True, stdout=PIPE)
 	
 
 ros.init_node("turtlebot3")
@@ -66,6 +77,8 @@ map_save = save_map()
 wait_for_map()
 
 slam.shutdown()
+run_mannequin_detector()
+run_positions()
 
 
 nav = run_navigation()
