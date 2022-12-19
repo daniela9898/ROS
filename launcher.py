@@ -61,31 +61,27 @@ def run_goals():
     command = "python mannequins_goal.py"
     p = Popen(command, shell=True, stdout=PIPE)
 	
+if __name__ == '__main__':
+    ros.init_node("turtlebot3")
 
-ros.init_node("turtlebot3")
+    remove_map()
 
-remove_map()
+    sim = run_simulation()
+    time.sleep(10)
+    slam = run_slam()
 
-sim = run_simulation()
-time.sleep(10)
-slam = run_slam()
+    time.sleep(5)
 
-time.sleep(5)
+    map_save = save_map()
 
-map_save = save_map()
+    wait_for_map()
 
-wait_for_map()
-
-slam.shutdown()
-run_mannequin_detector()
-run_positions()
+    slam.shutdown()
+    run_mannequin_detector()
+    run_positions()
 
 
-nav = run_navigation()
+    nav = run_navigation()
 
-#run mann det
-#run position 
-#run goal 
-
-while True:
-    pass
+    while True:
+        pass
